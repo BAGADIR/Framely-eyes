@@ -46,7 +46,7 @@ openai-whisper>=20231117
 madmom>=0.16.1  # BeatNet dependency for rhythm detection
 
 # Audio Engineering & Events
-tensorflow>=2.13.0,<2.16.0
+tensorflow>=2.16.0  # 2.16+ required for Python 3.12
 pyannote.audio>=3.1.0
 speechbrain>=0.5.16
 
