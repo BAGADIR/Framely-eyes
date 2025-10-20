@@ -1,0 +1,36 @@
+# Model-specific dependencies for RunPod deployment
+# These require GPU and are separated for better caching
+
+# Computer Vision Models
+ultralytics>=8.0.0                    # YOLOv8
+insightface>=0.7.3                    # Face detection
+onnxruntime-gpu>=1.16.0              # ONNX runtime for InsightFace
+
+# Super Resolution
+basicsr>=1.4.2                        # Real-ESRGAN dependency
+realesrgan>=0.3.0                     # Super-resolution
+
+# Segmentation (SAM2)
+segment-anything-2>=1.0.0; python_version >= '3.10'
+# Alternative if SAM2 not available:
+# segment-anything>=1.0.0
+
+# OCR
+paddlepaddle-gpu>=2.5.0              # PaddlePaddle with GPU
+paddleocr>=2.7.0                      # PaddleOCR
+
+# Audio Processing (GPU accelerated where possible)
+librosa>=0.10.0                       # Audio analysis
+soundfile>=0.12.0                     # Audio I/O
+essentia>=2.1b6                       # Audio features
+pyAudioAnalysis>=0.3.14              # Audio analysis
+pyloudnorm>=0.1.1                     # Loudness normalization
+pystoi>=0.3.3                         # Speech intelligibility
+speechbrain>=0.5.16                   # Speech processing
+
+# Vision-Language (handled by vLLM in separate container)
+# Not included here as Qwen runs in its own service
+
+# Optional: Emotion recognition
+# torch-audiomentations>=0.11.0
+# transformers>=4.30.0

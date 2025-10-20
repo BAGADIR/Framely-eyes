@@ -1,0 +1,61 @@
+FROM runpod/pytorch:2.1.0-py3.10-cuda12.1.1-devel-ubuntu22.04
+
+# Set environment variables
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/workspace/framely-eyes
+ENV MODEL_CACHE=/workspace/.cache
+ENV HF_HOME=/workspace/.cache/huggingface
+ENV TORCH_HOME=/workspace/.cache/torch
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    ffmpeg \
+    libgl1 \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    libgomp1 \
+    git \
+    wget \
+    curl \
+    libsndfile1 \
+    libopencv-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create workspace directory
+WORKDIR /workspace/framely-eyes
+
+# Copy requirements first for caching
+COPY requirements.txt .
+COPY requirements-models.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir -r requirements-models.txt
+
+# Copy application code
+COPY . .
+
+# Create model cache directory
+RUN mkdir -p $MODEL_CACHE/huggingface $MODEL_CACHE/torch $MODEL_CACHE/insightface
+
+# Download and setup models on build (saves time on startup)
+RUN python3 -c "from ultralytics import YOLO; YOLO('yolov8m.pt')" && \
+    echo "✅ YOLO models cached"
+
+# Create startup script
+COPY docker/runpod_start.sh /start.sh
+RUN chmod +x /start.sh
+
+# Expose port
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Start script
+CMD ["/start.sh"]

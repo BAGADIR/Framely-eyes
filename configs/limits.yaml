@@ -1,0 +1,61 @@
+detect:
+  tile:
+    size: 512
+    stride: 256
+  two_pass:
+    enabled: true
+    fine_input: 1536
+    fine_conf: 0.10
+  superres:
+    enabled: true
+    engine: realesrgan_x4plus
+    trigger_min_h: 1440
+  track:
+    engine: bytetrack
+    window: 5
+    min_hits: 2
+  small_object_min_px: 8
+
+audio:
+  loudness:
+    target_lufs: -14.0
+    true_peak_limit_dbTP: -1.0
+  stoi:
+    enabled: true
+    window_s: 3.0
+    min_ok: 0.80
+    min_coverage_pct: 90
+  stereo:
+    phase_warn_thresh: 0.2
+  events:
+    model: yamnet
+    conf: 0.5
+  diarization:
+    enabled: false
+
+coverage_thresholds:
+  min_detectable_px: 10
+  frames_analyzed_pct: 99
+  lufs_trace_pct: 100
+  stoi_pct: 90
+
+runtime:
+  frame_stride: 1              # analyze every frame
+  qwen_context_max_frames: 12
+  gpu_semaphore: 2
+  oom_fallback_order:
+    - sam2_off
+    - sr_off
+    - qwen_ctx_shrink
+
+ablation:
+  no_sr: false
+  no_tiling: false
+  light_audio: false
+
+security:
+  max_video_mb: 1000
+  mime_whitelist:
+    - video/mp4
+    - video/quicktime
+    - video/x-matroska

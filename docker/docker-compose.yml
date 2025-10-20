@@ -1,0 +1,71 @@
+version: "3.9"
+
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.api
+    image: framely/analyzer-api:latest
+    env_file:
+      - ../configs/settings.example.env
+    volumes:
+      - ..:/app
+      - ../store:/app/store
+      - model-cache:/app/.cache
+    ports:
+      - "8000:8000"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=0
+    command: uvicorn services.api.api:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      - qwen
+      - redis
+    networks:
+      - framely-net
+
+  qwen:
+    image: vllm/vllm-openai:latest
+    command: >
+      --model Qwen/Qwen2.5-VL-7B-Instruct
+      --quantization awq
+      --max-model-len 8192
+      --gpu-memory-utilization 0.9
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=0
+    ports:
+      - "8001:8000"
+    volumes:
+      - model-cache:/root/.cache
+    networks:
+      - framely-net
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - framely-net
+
+volumes:
+  model-cache:
+  redis-data:
+
+networks:
+  framely-net:
+    driver: bridge

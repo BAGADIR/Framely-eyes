@@ -1,0 +1,48 @@
+version: "3.9"
+
+# RunPod-optimized configuration
+# Use this for RunPod deployment
+
+services:
+  framely-all-in-one:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.runpod
+    image: framely/runpod:latest
+    container_name: framely-runpod
+    restart: unless-stopped
+    env_file:
+      - ../configs/settings.env
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - QWEN_LOCAL=true              # Run Qwen in same container
+      - QWEN_API_BASE=http://localhost:8001/v1
+      - REDIS_HOST=127.0.0.1
+      - MODEL_CACHE=/workspace/.cache
+    ports:
+      - "8000:8000"   # API
+      - "8001:8001"   # Qwen-VL (internal)
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    volumes:
+      - /workspace/framely-eyes:/workspace/framely-eyes
+      - model-cache:/workspace/.cache
+      - store-data:/workspace/framely-eyes/store
+    shm_size: '16gb'  # Shared memory for PyTorch
+    networks:
+      - framely-net
+
+volumes:
+  model-cache:
+    driver: local
+  store-data:
+    driver: local
+
+networks:
+  framely-net:
+    driver: bridge

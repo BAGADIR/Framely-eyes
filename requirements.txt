@@ -1,0 +1,86 @@
+# Web Framework
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+pydantic>=2.0.0,<3.0.0
+python-multipart>=0.0.6
+
+# Computer Vision - Core
+opencv-python-headless>=4.8.0
+opencv-contrib-python>=4.8.0
+numpy>=1.24.0,<2.0.0
+pillow>=10.0.0
+scikit-image>=0.21.0
+
+# PyTorch with CUDA 12.4
+--extra-index-url https://download.pytorch.org/whl/cu124
+torch>=2.1.0
+torchvision>=0.16.0
+torchaudio>=2.1.0
+
+# Object Detection & Segmentation
+ultralytics>=8.0.0
+segment-anything-2>=1.0.0
+insightface>=0.7.3
+onnxruntime-gpu>=1.16.0
+
+# OCR & Font Detection
+paddlepaddle-gpu>=2.5.0
+paddleocr>=2.7.0
+
+# Super Resolution
+realesrgan>=0.3.0
+basicsr>=1.4.2
+
+# Audio Analysis
+essentia>=2.1b6
+pyAudioAnalysis>=0.3.14
+pyloudnorm>=0.1.1
+pystoi>=0.3.3
+librosa>=0.10.0
+soundfile>=0.12.0
+pydub>=0.25.1
+beatnet>=1.0.0
+openai-whisper>=20230314
+
+# Audio Engineering & Events
+tensorflow>=2.13.0,<2.16.0
+pyannote.audio>=3.1.0
+speechbrain>=0.5.16
+
+# Motion & Saliency
+py-gbvs>=0.0.13
+
+# Video Processing
+scenedetect[opencv]>=0.6.0
+moviepy>=1.0.3
+
+# Utilities
+tqdm>=4.66.0
+pyyaml>=6.0.0
+python-magic>=0.4.27
+python-magic-bin>=0.4.14; sys_platform == 'win32'
+
+# Database & Caching
+redis>=5.0.0
+rq>=1.15.0
+qdrant-client>=1.6.0
+faiss-cpu>=1.7.4
+
+# HTTP Client
+httpx>=0.25.0
+requests>=2.31.0
+
+# Logging & Monitoring
+loguru>=0.7.0
+prometheus-client>=0.19.0
+
+# Testing
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+
+# Development
+black>=23.0.0
+isort>=5.12.0
+flake8>=6.1.0
+mypy>=1.7.0
