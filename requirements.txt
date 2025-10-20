@@ -23,6 +23,9 @@ ultralytics>=8.0.0
 insightface>=0.7.3
 onnxruntime-gpu>=1.16.0
 
+# Emotion Detection
+timm>=0.9.0  # For EmoNet model
+
 # OCR & Font Detection
 paddlepaddle-gpu>=2.5.0
 paddleocr>=2.7.0
@@ -32,15 +35,15 @@ realesrgan>=0.3.0
 basicsr>=1.4.2
 
 # Audio Analysis
-essentia>=2.1b6
+essentia==2.1b6.dev1389
 pyAudioAnalysis>=0.3.14
 pyloudnorm>=0.1.1
 pystoi>=0.3.3
 librosa>=0.10.0
 soundfile>=0.12.0
 pydub>=0.25.1
-beatnet>=1.0.0
-openai-whisper>=20230314
+openai-whisper>=20231117
+madmom>=0.16.1  # BeatNet dependency for rhythm detection
 
 # Audio Engineering & Events
 tensorflow>=2.13.0,<2.16.0
