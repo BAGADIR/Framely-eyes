@@ -10,9 +10,8 @@ onnxruntime-gpu>=1.16.0              # ONNX runtime for InsightFace
 basicsr>=1.4.2                        # Real-ESRGAN dependency
 realesrgan>=0.3.0                     # Super-resolution
 
-# Segmentation (SAM2) - Install from GitHub
+# Segmentation (SAM2) - Installed via install.sh
 # pip install git+https://github.com/facebookresearch/segment-anything-2.git
-segment-anything @ git+https://github.com/facebookresearch/segment-anything-2.git
 
 # OCR
 paddlepaddle-gpu>=2.5.0              # PaddlePaddle with GPU
