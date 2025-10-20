@@ -51,7 +51,8 @@ pyannote.audio>=3.1.0
 speechbrain>=0.5.16
 
 # Motion & Saliency
-py-gbvs>=0.0.13
+# Using OpenCV's built-in saliency (already in opencv-contrib-python)
+# py-gbvs not available on PyPI - OpenCV provides SpectralResidual and FineGrained methods
 
 # Video Processing
 scenedetect[opencv]>=0.6.0
