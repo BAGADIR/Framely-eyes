@@ -156,8 +156,12 @@ def extract_audio(video_path: str, video_id: str, base_path: str = "store") -> s
         audio_path
     ]
     
-    subprocess.run(cmd, check=True, capture_output=True)
-    return audio_path
+    try:
+        subprocess.run(cmd, check=True, capture_output=True)
+        return audio_path
+    except subprocess.CalledProcessError as e:
+        print(f"Warning: Audio extraction failed (video may have no audio track): {e}")
+        return None
 
 
 def prepare(
