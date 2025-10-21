@@ -85,6 +85,16 @@ def detect_shots(video_path: str, threshold: float = 27.0) -> List[tuple]:
         end_frame = scene[1].get_frames()
         shots.append((start_frame, end_frame))
     
+    # Fallback: if no shots detected, treat entire video as one shot
+    if not shots:
+        cap = cv2.VideoCapture(video_path)
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        cap.release()
+        
+        if total_frames > 0:
+            shots.append((0, total_frames - 1))
+            print(f"Warning: No scene changes detected, treating entire video as one shot ({total_frames} frames)")
+    
     return shots
 
 
