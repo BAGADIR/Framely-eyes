@@ -19,8 +19,8 @@ def check_imports():
         "ultralytics": "ultralytics (YOLO)",
         "insightface": "insightface",
         "paddleocr": "paddleocr",
-        "basicsr": "basicsr (Real-ESRGAN)",
-        "realesrgan": "realesrgan",
+        "basicsr.archs": "basicsr (Real-ESRGAN)",
+        "realesrgan.archs": "realesrgan",
         
         # Audio
         "librosa": "librosa",
