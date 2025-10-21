@@ -18,9 +18,21 @@ def get_face_model():
     """Get or load InsightFace model."""
     global _face_model
     if _face_model is None and INSIGHTFACE_AVAILABLE:
-        _face_model = FaceAnalysis(name='buffalo_l', providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
-        ctx_id = 0 if torch.cuda.is_available() else -1
-        _face_model.prepare(ctx_id=ctx_id, det_size=(640, 640))
+        try:
+            # Try CUDA first
+            _face_model = FaceAnalysis(providers=['CUDAExecutionProvider'])
+            _face_model.prepare(ctx_id=0, det_size=(640, 640))
+            print("✅ Face detection: CUDA mode")
+        except Exception as cuda_error:
+            print(f"⚠️ CUDA face detection failed, falling back to CPU: {cuda_error}")
+            try:
+                # Fallback to CPU
+                _face_model = FaceAnalysis(providers=['CPUExecutionProvider'])
+                _face_model.prepare(ctx_id=-1, det_size=(640, 640))
+                print("✅ Face detection: CPU mode")
+            except Exception as cpu_error:
+                print(f"❌ CPU face detection also failed: {cpu_error}")
+                _face_model = None
     return _face_model
 
 
@@ -41,39 +53,31 @@ def detect_faces(image: np.ndarray) -> List[Dict[str, Any]]:
         return []
     
     faces = []
-    results = model.get(image)
     
-    # Emotion mapping from facial landmarks
-    EMOTION_MAP = {
-        0: "neutral", 1: "happy", 2: "sad", 3: "surprise",
-        4: "fear", 5: "disgust", 6: "anger"
-    }
+    try:
+        results = model.get(image)
+        
+        for idx, face in enumerate(results):
+            bbox = face.bbox.astype(int)
+            
+            # Extract age and gender if available
+            age = int(face.age) if hasattr(face, 'age') else None
+            gender = face.sex if hasattr(face, 'sex') else None
+            
+            face_data = {
+                "bbox": bbox.tolist(),
+                "conf": float(face.det_score),
+                "landmarks": face.kps.tolist() if hasattr(face, 'kps') else [],
+                "age": age,
+                "gender": gender,
+                "embedding": face.normed_embedding.tolist() if hasattr(face, 'normed_embedding') else [],
+                "face_id": f"face_{idx}"
+            }
+            faces.append(face_data)
     
-    for idx, face in enumerate(results):
-        bbox = face.bbox.astype(int).tolist()
-        
-        # Get face attributes
-        age = int(face.age) if hasattr(face, 'age') else None
-        gender = "male" if face.gender == 1 else "female" if hasattr(face, 'gender') else None
-        
-        # Estimate emotion from landmarks (simplified)
-        # In production, you'd use a dedicated emotion model
-        emotion = "neutral"  # Default
-        emotion_conf = 1.0
-        
-        face_data = {
-            "bbox": bbox,
-            "conf": float(face.det_score),
-            "landmarks": face.kps.tolist() if hasattr(face, 'kps') else None,
-            "age": age,
-            "gender": gender,
-            "emotion": emotion,
-            "emotion_conf": emotion_conf,
-            "embedding": face.embedding.tolist() if hasattr(face, 'embedding') else None,
-            "face_id": f"face_{idx}"
-        }
-        
-        faces.append(face_data)
+    except Exception as e:
+        print(f"⚠️ Face detection error (continuing without faces): {e}")
+        return []  # Return empty list instead of crashing
     
     return faces
 
