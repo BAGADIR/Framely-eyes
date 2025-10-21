@@ -6,8 +6,8 @@ python-multipart>=0.0.6
 pandas>=2.2.0  # Required for Python 3.12 compatibility
 
 # Computer Vision - Core
-opencv-python-headless>=4.8.0
-opencv-contrib-python>=4.8.0
+opencv-python-headless>=4.8.0,<5.0.0
+opencv-contrib-python>=4.8.0,<5.0.0
 numpy>=1.24.0,<2.0.0
 pillow>=10.0.0
 scikit-image>=0.21.0
@@ -40,6 +40,8 @@ essentia==2.1b6.dev1389
 pyAudioAnalysis>=0.3.14
 pyloudnorm>=0.1.1
 pystoi>=0.3.3
+numba>=0.59.0  # Python 3.12 support (librosa dependency)
+llvmlite>=0.42.0  # Python 3.12 support (numba dependency)
 librosa>=0.10.0
 soundfile>=0.12.0
 pydub>=0.25.1
