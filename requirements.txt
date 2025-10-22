@@ -30,8 +30,7 @@ onnxruntime-gpu>=1.16.0
 timm>=0.9.0  # For EmoNet model
 
 # OCR & Font Detection
-paddlepaddle-gpu>=2.5.0
-paddleocr>=2.7.0
+easyocr>=1.7.0
 
 # Super Resolution
 realesrgan>=0.3.0
