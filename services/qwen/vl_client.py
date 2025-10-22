@@ -15,6 +15,8 @@ from services.qwen.prompts import (
 QWEN_API_BASE = os.getenv("QWEN_API_BASE", "http://127.0.0.1:8000/v1")
 QWEN_API_KEY = os.getenv("QWEN_API_KEY", "EMPTY")
 QWEN_TIMEOUT = int(os.getenv("QWEN_TIMEOUT", "60"))
+# Model name should match the server's loaded model
+QWEN_MODEL = os.getenv("QWEN_MODEL", "Qwen/QWen3-VL-8B-Instruct").replace("QWen", "Qwen")
 
 
 def encode_image_base64(image_path: str) -> str:
@@ -141,7 +143,7 @@ async def call_qwen_vl(
                 response = await client.post(
                     f"{base}/chat/completions",
                     json={
-                        "model": "Qwen/Qwen2.5-VL-7B-Instruct",
+                        "model": QWEN_MODEL,
                         "messages": messages,
                         "max_tokens": max_tokens,
                         "temperature": 0.1
