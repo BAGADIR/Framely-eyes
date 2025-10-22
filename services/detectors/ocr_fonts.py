@@ -18,13 +18,8 @@ def get_ocr_model():
     """Get or load PaddleOCR model."""
     global _ocr_model
     if _ocr_model is None and PADDLEOCR_AVAILABLE:
-        # Minimal parameters that work across PaddleOCR versions
-        _ocr_model = PaddleOCR(
-            lang='en',
-            det=True,
-            rec=True,
-            use_angle_cls=True
-        )
+        # Absolute minimal - only lang parameter
+        _ocr_model = PaddleOCR(lang='en')
     return _ocr_model
 
 
