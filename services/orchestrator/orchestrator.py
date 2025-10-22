@@ -7,7 +7,8 @@ from datetime import datetime
 
 from services.detectors import (
     prep, yolo, tile_yolo, sam2, superres, faces,
-    ocr_fonts, color_comp, motion_saliency, audio_eng, transitions
+    ocr_fonts, color_comp, motion_saliency, audio_eng, transitions,
+    tracker, optical_flow
 )
 from services.orchestrator.gpu_pool import get_gpu_pool
 from services.orchestrator.dag_types import DetectorStage, DetectorDAG
@@ -139,16 +140,27 @@ async def analyze_shot(
             sam2_result = sam2.detect(shot_with_objects, cfg)
             detectors["objects"] = sam2_result.get("objects", detectors["objects"])
         
+        # ByteTrack - persistent object tracking
+        shot_with_objects = {**shot, "detectors": {"objects": detectors["objects"]}}
+        tracker_result = tracker.detect(shot_with_objects, cfg)
+        detectors["objects"] = tracker_result.get("objects", detectors["objects"])
+        
+        # Optical Flow - motion validation
+        flow_result = optical_flow.detect(shot, cfg)
+        detectors["flow"] = flow_result.get("flow")
+        detectors["motion_score"] = flow_result.get("motion_score", 0.0)
+        
         # Faces
         face_result = faces.detect(shot, cfg)
         detectors["faces"] = face_result.get("faces", [])
     
-    # Phase 2: CPU detectors (can run in parallel)
+    # Phase 2: CPU detectors (run in executor for parallelism)
+    loop = asyncio.get_event_loop()
     cpu_tasks = [
-        ocr_fonts.detect(shot, cfg),
-        color_comp.detect(shot, cfg),
-        motion_saliency.detect(shot, cfg),
-        transitions.detect(shot, cfg)
+        loop.run_in_executor(None, ocr_fonts.detect, shot, cfg),
+        loop.run_in_executor(None, color_comp.detect, shot, cfg),
+        loop.run_in_executor(None, motion_saliency.detect, shot, cfg),
+        loop.run_in_executor(None, transitions.detect, shot, cfg)
     ]
     
     cpu_results = await asyncio.gather(*cpu_tasks)
