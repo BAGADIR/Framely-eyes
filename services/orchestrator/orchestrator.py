@@ -176,15 +176,18 @@ async def analyze_shot(
         audio_result = audio_eng.detect(shot, cfg, audio_path)
         detectors["audio"] = audio_result.get("audio", {})
     
-    # Phase 4: Qwen VL reasoning
-    async with gpu_pool:
-        qwen_ctx_frames = shot.get("qwen_ctx", cfg["runtime"]["qwen_context_max_frames"])
-        shot_bundle = {
-            **shot,
-            "detectors": detectors
-        }
-        qwen_result = await qwen_analyze_shot(shot_bundle, frame_paths[:qwen_ctx_frames])
-        shot_bundle.update(qwen_result)
+    # Phase 4: Qwen VL reasoning (toggle via QWEN_ENABLED)
+    shot_bundle = {
+        **shot,
+        "detectors": detectors
+    }
+    if os.getenv("QWEN_ENABLED", "1") == "1":
+        async with gpu_pool:
+            qwen_ctx_frames = shot.get("qwen_ctx", cfg["runtime"]["qwen_context_max_frames"])
+            qwen_result = await qwen_analyze_shot(shot_bundle, frame_paths[:qwen_ctx_frames])
+            shot_bundle.update(qwen_result)
+    else:
+        shot_bundle["qwen"] = {"disabled": True}
     
     return shot_bundle
 
@@ -233,11 +236,15 @@ async def run_analysis(
     print(f"[{video_id}] Building scenes...")
     scenes = build_scenes(shot_bundles, meta, cfg)
     
-    # Scene-level Qwen reasoning
+    # Scene-level Qwen reasoning (toggle via QWEN_ENABLED)
     print(f"[{video_id}] Analyzing {len(scenes)} scenes...")
-    for scene in scenes:
-        scene_shots = [s for s in shot_bundles if s["shot_id"] in scene["shots"]]
-        scene["narrative"] = await analyze_scene(scene, scene_shots)
+    if os.getenv("QWEN_ENABLED", "1") == "1":
+        for scene in scenes:
+            scene_shots = [s for s in shot_bundles if s["shot_id"] in scene["shots"]]
+            scene["narrative"] = await analyze_scene(scene, scene_shots)
+    else:
+        for scene in scenes:
+            scene["narrative"] = {"disabled": True}
     
     # Coverage computation
     print(f"[{video_id}] Computing coverage metrics...")
