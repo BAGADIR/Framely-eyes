@@ -8,6 +8,22 @@ import cv2
 import numpy as np
 
 
+class NumpyJSONEncoder(json.JSONEncoder):
+    """JSON encoder that handles numpy types (ints, floats, bools, arrays)."""
+    def default(self, obj: Any):  # type: ignore[override]
+        # Scalars
+        if isinstance(obj, np.integer):
+            return int(obj)
+        if isinstance(obj, np.floating):
+            return float(obj)
+        if isinstance(obj, np.bool_):
+            return bool(obj)
+        # Arrays
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return super().default(obj)
+
+
 def ensure_dir(path: str) -> str:
     """Ensure directory exists, create if needed.
     
@@ -94,7 +110,8 @@ def save_json(data: Dict[str, Any], path: str) -> None:
     """
     ensure_dir(os.path.dirname(path))
     with open(path, 'w', encoding='utf-8') as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
+        # Use numpy-safe encoder to avoid TypeError for numpy scalar types
+        json.dump(data, f, indent=2, ensure_ascii=False, cls=NumpyJSONEncoder)
 
 
 def load_json(path: str) -> Dict[str, Any]:

@@ -11,7 +11,8 @@ from services.qwen.prompts import (
 
 
 # Configuration
-QWEN_API_BASE = os.getenv("QWEN_API_BASE", "http://qwen:8000/v1")
+# Default to localhost; allow override via env. We'll also try fallbacks if the first base fails.
+QWEN_API_BASE = os.getenv("QWEN_API_BASE", "http://127.0.0.1:8000/v1")
 QWEN_API_KEY = os.getenv("QWEN_API_KEY", "EMPTY")
 QWEN_TIMEOUT = int(os.getenv("QWEN_TIMEOUT", "60"))
 
@@ -126,43 +127,48 @@ async def call_qwen_vl(
     else:
         messages.append({"role": "user", "content": user_prompt})
     
-    # Call API
+    # Call API with fallback bases
+    candidate_bases = []
+    # Ensure no duplicates while preserving order
+    for b in [QWEN_API_BASE, "http://127.0.0.1:8000/v1", "http://127.0.0.1:8001/v1"]:
+        if b and b not in candidate_bases:
+            candidate_bases.append(b)
+
     async with httpx.AsyncClient(timeout=QWEN_TIMEOUT) as client:
-        try:
-            response = await client.post(
-                f"{QWEN_API_BASE}/chat/completions",
-                json={
-                    "model": "Qwen/Qwen2.5-VL-7B-Instruct",
-                    "messages": messages,
-                    "max_tokens": max_tokens,
-                    "temperature": 0.1
-                },
-                headers={"Authorization": f"Bearer {QWEN_API_KEY}"}
-            )
-            response.raise_for_status()
-            result = response.json()
-            
-            # Extract and parse JSON response
-            content = result["choices"][0]["message"]["content"]
-            
-            # Try to parse as JSON
+        last_err: Optional[Exception] = None
+        for base in candidate_bases:
             try:
-                return json.loads(content)
-            except json.JSONDecodeError:
-                # Extract JSON from markdown code blocks if present
-                if "```json" in content:
-                    json_str = content.split("```json")[1].split("```")[0].strip()
-                    return json.loads(json_str)
-                elif "```" in content:
-                    json_str = content.split("```")[1].split("```")[0].strip()
-                    return json.loads(json_str)
-                else:
-                    # Return error
-                    return {"error": "Failed to parse JSON", "raw": content}
-        
-        except Exception as e:
-            print(f"Error calling Qwen-VL: {e}")
-            return {"error": str(e)}
+                response = await client.post(
+                    f"{base}/chat/completions",
+                    json={
+                        "model": "Qwen/Qwen2.5-VL-7B-Instruct",
+                        "messages": messages,
+                        "max_tokens": max_tokens,
+                        "temperature": 0.1
+                    },
+                    headers={"Authorization": f"Bearer {QWEN_API_KEY}"}
+                )
+                response.raise_for_status()
+                result = response.json()
+                # Extract and parse JSON response
+                content = result["choices"][0]["message"]["content"]
+                try:
+                    return json.loads(content)
+                except json.JSONDecodeError:
+                    if "```json" in content:
+                        json_str = content.split("```json")[1].split("```")[0].strip()
+                        return json.loads(json_str)
+                    elif "```" in content:
+                        json_str = content.split("```")[1].split("```")[0].strip()
+                        return json.loads(json_str)
+                    else:
+                        return {"error": "Failed to parse JSON", "raw": content}
+            except Exception as e:
+                print(f"Error calling Qwen-VL at {base}: {e}")
+                last_err = e
+                continue
+        # If all bases failed, return last error
+        return {"error": str(last_err) if last_err else "Unknown Qwen error"}
 
 
 async def analyze_shot(
