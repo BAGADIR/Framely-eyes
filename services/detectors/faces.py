@@ -15,24 +15,17 @@ _face_model = None
 
 
 def get_face_model():
-    """Get or load InsightFace model."""
+    """Get or load InsightFace model - CPU only due to RTX 5090 PTX incompatibility."""
     global _face_model
     if _face_model is None and INSIGHTFACE_AVAILABLE:
         try:
-            # Try CUDA first
-            _face_model = FaceAnalysis(providers=['CUDAExecutionProvider'])
-            _face_model.prepare(ctx_id=0, det_size=(640, 640))
-            print("✅ Face detection: CUDA mode")
-        except Exception as cuda_error:
-            print(f"⚠️ CUDA face detection failed, falling back to CPU: {cuda_error}")
-            try:
-                # Fallback to CPU
-                _face_model = FaceAnalysis(providers=['CPUExecutionProvider'])
-                _face_model.prepare(ctx_id=-1, det_size=(640, 640))
-                print("✅ Face detection: CPU mode")
-            except Exception as cpu_error:
-                print(f"❌ CPU face detection also failed: {cpu_error}")
-                _face_model = None
+            # Force CPU mode to avoid CUDA PTX compilation errors on RTX 5090
+            _face_model = FaceAnalysis(providers=['CPUExecutionProvider'])
+            _face_model.prepare(ctx_id=-1, det_size=(640, 640))
+            print("✅ Face detection: CPU mode (RTX 5090 PTX workaround)")
+        except Exception as e:
+            print(f"❌ Face detection failed: {e}")
+            _face_model = None
     return _face_model
 
 

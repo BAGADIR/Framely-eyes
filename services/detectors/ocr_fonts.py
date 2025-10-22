@@ -18,12 +18,12 @@ def get_ocr_model():
     """Get or load PaddleOCR model."""
     global _ocr_model
     if _ocr_model is None and PADDLEOCR_AVAILABLE:
-        use_gpu = torch.cuda.is_available()
+        # Minimal parameters that work across PaddleOCR versions
         _ocr_model = PaddleOCR(
-            use_angle_cls=True,
             lang='en',
-            use_gpu=use_gpu,
-            show_log=False
+            det=True,
+            rec=True,
+            use_angle_cls=True
         )
     return _ocr_model
 
