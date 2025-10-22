@@ -1,25 +1,7 @@
-"""Detectors package exports.
+"""Lazy-export detector submodules to avoid circular imports."""
 
-This makes submodules available via:
-    from services.detectors import tracker, yolo, sam2, ...
-"""
-
-# Re-export commonly used detector submodules
-from . import (
-    yolo,
-    tile_yolo,
-    tracker,
-    sam2,
-    optical_flow,
-    faces,
-    ocr_fonts,
-    color_comp,
-    transitions,
-    superres,
-    audio_eng,
-    motion_saliency,
-    prep,
-)
+from importlib import import_module
+from typing import Dict
 
 __all__ = [
     "yolo",
@@ -37,3 +19,18 @@ __all__ = [
     "prep",
 ]
 
+_CACHE: Dict[str, object] = {}
+
+
+def __getattr__(name: str):
+    if name in _CACHE:
+        return _CACHE[name]
+    if name in __all__:
+        module = import_module(f"{__name__}.{name}")
+        _CACHE[name] = module
+        return module
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+
+
+def __dir__():
+    return sorted(list(globals().keys()) + __all__)
