@@ -78,16 +78,18 @@ def detect_shots(video_path: str, threshold: float = 27.0) -> List[tuple]:
     Returns:
         List of (start_frame, end_frame) tuples
     """
-    # PySceneDetect v0.5 API: use VideoManager/SceneManager
-    video_manager = VideoManager([video_path])
-    scene_manager = SceneManager()
-    scene_manager.add_detector(ContentDetector(threshold=threshold))
     try:
-        video_manager.start()
-        scene_manager.detect_scenes(video_manager)
-        scene_list = scene_manager.get_scene_list()
-    finally:
-        video_manager.release()
+        video_manager = VideoManager([video_path])
+        scene_manager = SceneManager()
+        scene_manager.add_detector(ContentDetector(threshold=threshold))
+        try:
+            video_manager.start()
+            scene_manager.detect_scenes(video_manager)
+            scene_list = scene_manager.get_scene_list()
+        finally:
+            video_manager.release()
+    except Exception:
+        scene_list = []
     
     shots = []
     for i, scene in enumerate(scene_list):
@@ -95,15 +97,28 @@ def detect_shots(video_path: str, threshold: float = 27.0) -> List[tuple]:
         end_frame = scene[1].get_frames()
         shots.append((start_frame, end_frame))
     
-    # Fallback: if no shots detected, treat entire video as one shot
     if not shots:
         cap = cv2.VideoCapture(video_path)
-        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        prev_gray = None
+        start_idx = 0
+        idx = 0
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                break
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            if prev_gray is not None:
+                diff = cv2.absdiff(gray, prev_gray)
+                score = float(np.mean(diff))
+                if score > 25.0:
+                    shots.append((start_idx, max(idx - 1, start_idx)))
+                    start_idx = idx
+            prev_gray = gray
+            idx += 1
+        total = idx
         cap.release()
-        
-        if total_frames > 0:
-            shots.append((0, total_frames - 1))
-            print(f"Warning: No scene changes detected, treating entire video as one shot ({total_frames} frames)")
+        if total > 0:
+            shots.append((start_idx, total - 1))
     
     return shots
 
