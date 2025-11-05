@@ -3,7 +3,8 @@ import os
 import cv2
 import subprocess
 from typing import Dict, Any, List, Optional
-from scenedetect import detect, ContentDetector
+from scenedetect import VideoManager, SceneManager
+from scenedetect.detectors import ContentDetector
 from services.utils.io import get_video_dir, ensure_dir, get_frames_dir
 from services.utils.hashing import sha256_file
 import numpy as np
@@ -77,7 +78,16 @@ def detect_shots(video_path: str, threshold: float = 27.0) -> List[tuple]:
     Returns:
         List of (start_frame, end_frame) tuples
     """
-    scene_list = detect(video_path, ContentDetector(threshold=threshold))
+    # PySceneDetect v0.5 API: use VideoManager/SceneManager
+    video_manager = VideoManager([video_path])
+    scene_manager = SceneManager()
+    scene_manager.add_detector(ContentDetector(threshold=threshold))
+    try:
+        video_manager.start()
+        scene_manager.detect_scenes(video_manager)
+        scene_list = scene_manager.get_scene_list()
+    finally:
+        video_manager.release()
     
     shots = []
     for i, scene in enumerate(scene_list):
